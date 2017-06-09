@@ -30,8 +30,8 @@
  "M-;"    #'eval-expression
  "A-;"    #'eval-expression
  ;; Text-scaling
- "M-+"    (λ! (text-scale-set 0))
- "M-="    #'text-scale-increase
+ "M-="    (λ! (text-scale-set 0))
+ "M-+"    #'text-scale-increase
  "M--"    #'text-scale-decrease
  ;; Simple window navigation/manipulation
  "C-`"    #'doom/popup-toggle
