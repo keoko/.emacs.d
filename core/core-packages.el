@@ -79,8 +79,8 @@ base by `doom!' and for calculating how many packages exist.")
       package-user-dir (expand-file-name "elpa" doom-packages-dir)
       package-enable-at-startup nil
       package-archives
-      '(("gnu"   . "https://elpa.gnu.org/packages/")
-        ("melpa" . "https://melpa.org/packages/"))
+      '(("gnu"   . "http://elpa.gnu.org/packages/")
+        ("melpa" . "http://melpa.org/packages/"))
       ;; I omit Marmalade because its packages are manually submitted rather
       ;; than pulled, so packages are often out of date with upstream.
 
