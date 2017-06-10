@@ -1,9 +1,5 @@
 ;;; private/hlissner/+bindings.el -*- lexical-binding: t; -*-
 
-;; I've swapped these keys on my keyboard
-(setq x-super-keysym 'alt
-      x-alt-keysym   'meta)
-
 (defmacro find-file-in! (path &optional project-p)
   "Returns an interactive function for searching files."
   `(lambda () (interactive)
@@ -490,6 +486,32 @@
    :n "S"   #'gist-unstar
    :n "y"   #'gist-print-current-url)
 
+ ;; helm
+ (:after helm
+   (:map helm-map
+     "ESC"        nil
+     "C-S-n"      #'helm-next-source
+     "C-S-p"      #'helm-previous-source
+     "C-u"        #'helm-delete-minibuffer-contents
+     "C-w"        #'backward-kill-word
+     "C-r"        #'evil-paste-from-register ; Evil registers in helm! Glorious!
+     "C-b"        #'backward-word
+     [left]       #'backward-char
+     [right]      #'forward-char
+     [escape]     #'helm-keyboard-quit
+     [tab]        #'helm-execute-persistent-action)
+
+   (:after helm-files
+     (:map helm-generic-files-map
+       :e "ESC"     #'helm-keyboard-quit)
+     (:map helm-find-files-map
+       "C-w" #'helm-find-files-up-one-level
+       "TAB" #'helm-execute-persistent-action))
+
+   (:after helm-ag
+     (:map helm-ag-map
+       "<backtab>"  #'helm-ag-edit)))
+
  ;; hl-todo
  :m  "]t" #'hl-todo-next
  :m  "[t" #'hl-todo-previous
@@ -504,8 +526,8 @@
    "C-k" #'ivy-previous-line
    "C-j" #'ivy-next-line
    "C-l" #'ivy-alt-done
-   "C-w" #'+ivy/backward-kill-word
-   "C-u" #'doom/minibuffer-kill-line
+   "C-w" #'ivy-backward-kill-word
+   "C-u" #'ivy-kill-line
    "C-b" #'backward-word
    "C-f" #'forward-word)
 

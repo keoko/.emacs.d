@@ -41,27 +41,7 @@
   ;; showing revision details in the minibuffer, show them in
   ;; `header-line-format', which has better visibility.
   (setq git-timemachine-show-minibuffer-details nil)
-
-  (defun +vcs|toggle-header-line ()
-    (if git-timemachine-mode
-        (+vcs*update-header-line)
-      (setq-local header-line-format nil)))
-
-  (defun +vcs*update-header-line (&rest _)
-    (when (and git-timemachine-mode git-timemachine-revision)
-      (let* ((revision git-timemachine-revision)
-             (date-relative (nth 3 revision))
-             (date-full (nth 4 revision))
-             (author (if git-timemachine-show-author (concat (nth 6 revision) ": ") ""))
-             (sha-or-subject (if (eq git-timemachine-minibuffer-detail 'commit) (car revision) (nth 5 revision))))
-        (setq-local
-         header-line-format
-         (format "%s%s [%s (%s)]"
-                 (propertize author 'face 'git-timemachine-minibuffer-author-face)
-                 (propertize sha-or-subject 'face 'git-timemachine-minibuffer-detail-face)
-                 date-full date-relative)))))
-
-  (add-hook 'git-timemachine-mode-hook #'+vcs|toggle-header-line)
+  (add-hook 'git-timemachine-mode-hook #'+vcs|init-header-line)
   (advice-add #'git-timemachine-show-revision :after #'+vcs*update-header-line)
 
   ;; Force evil to rehash keybindings for the current state
@@ -69,15 +49,16 @@
 
 
 (def-package! magit
-  :commands (magit-status magit-blame))
+  :commands (magit-status magit-blame)
+  :config
+  (set! :evil-state 'magit-status-mode 'emacs)
+  (after!
+    ;; Switch to emacs state only while in `magit-blame-mode', then back when
+    ;; its done (since it's a minor-mode).
+    (add-hook! 'magit-blame-mode-hook
+      (evil-local-mode (if magit-blame-mode -1 +1)))))
 
 
 (def-package! git-link
   :commands (git-link git-link-commit git-link-homepage))
-
-
-(def-package! evil-magit
-  :when (featurep! :feature evil)
-  :after magit
-  :init (setq evil-magit-want-horizontal-movement t))
 
