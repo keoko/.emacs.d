@@ -64,6 +64,7 @@
        gist            ; interacting with github gists
        macos           ; macos-specific commands
        neotree         ; a project drawer, like NERDTree for vim
+       password-store  ; password manager for nerds
        rotate-text     ; cycle region at point between text candidates
        term            ; terminals in Emacs
        tmux            ; an API for interacting with tmux
@@ -105,7 +106,7 @@
       ;crm             ; TODO org-mode for client relations management
        email           ; Emacs as an email client
       ;finance         ; TODO keeping track of my shekels
-      ;irc             ; TODO how neckbeards socialize
+       irc             ; how neckbeards socialize
        present         ; showing off presentations in emacs
       ;regex           ; TODO emacs as a regexp IDE
        rss             ; emacs as an RSS reader

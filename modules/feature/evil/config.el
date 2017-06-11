@@ -22,6 +22,9 @@
 ;; evil-mode
 ;;
 
+(autoload 'goto-last-change "goto-chg")
+(autoload 'goto-last-change-reverse "goto-chg")
+
 (def-package! evil :demand t
   :init
   (setq evil-want-C-u-scroll t
@@ -242,7 +245,7 @@ across windows."
   (add-hook 'emacs-startup-hook #'evil-escape-mode)
   :config
   ;; no `evil-escape' in minibuffer
-  (push #'minibufferp evil-escape-inhibit-functions)
+  (cl-pushnew #'minibufferp evil-escape-inhibit-functions)
   (map! :irvo "C-g" #'evil-escape))
 
 
