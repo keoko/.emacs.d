@@ -52,10 +52,12 @@ confirmation."
 (add-hook 'kill-emacs-query-functions #'doom-quit-p)
 
 ;; show typed keystrokes in minibuffer
-(setq echo-keystrokes 0.02)
+(defun doom|enable-ui-keystrokes ()  (setq echo-keystrokes 0.02))
+(defun doom|disable-ui-keystrokes () (setq echo-keystrokes 0))
+(doom|enable-ui-keystrokes)
 ;; ...but hide them while isearch is active
-(add-hook! isearch-mode     (setq echo-keystrokes 0))
-(add-hook! isearch-mode-end (setq echo-keystrokes 0.02))
+(add-hook 'isearch-mode-hook     #'doom|disable-ui-keystrokes)
+(add-hook 'isearch-mode-end-hook #'doom|enable-ui-keystrokes)
 
 ;; A minor mode for toggling the mode-line
 (defvar-local doom--modeline-format nil
@@ -95,14 +97,14 @@ local value, whether or not it's permanent-local. Therefore, we cycle
 
 ;; undo/redo changes to Emacs' window layout
 (defvar winner-dont-bind-my-keys t) ; I'll bind keys myself
-(require 'winner)
-(add-hook 'window-setup-hook #'winner-mode)
+(autoload 'winner-mode "winner" nil t)
+(add-hook 'doom-init-hook #'winner-mode)
 
 ;; highlight matching delimiters
 (setq show-paren-delay 0.1
       show-paren-highlight-openparen t
       show-paren-when-point-inside-paren t)
-(add-hook 'window-setup-hook #'show-paren-mode)
+(add-hook 'doom-init-hook #'show-paren-mode)
 
 ;;; More reliable inter-window border
 ;; The native border "consumes" a pixel of the fringe on righter-most splits,
@@ -110,7 +112,7 @@ local value, whether or not it's permanent-local. Therefore, we cycle
 (setq-default window-divider-default-places t
               window-divider-default-bottom-width 1
               window-divider-default-right-width 1)
-(add-hook 'window-setup-hook #'window-divider-mode)
+(add-hook 'doom-init-hook #'window-divider-mode)
 
 ;; like diminish, but for major-modes. [pedantry intensifies]
 (defvar doom-ui-mode-names
@@ -130,26 +132,30 @@ mode is detected.")
 ;; Bootstrap
 ;;
 
-(global-set-key [remap delete-frame] #'doom/delete-frame)
+;; Prompts the user for confirmation when deleting a non-empty frame
+(define-key global-map [remap delete-frame] #'doom/delete-frame)
 
-;; auto-enabled in Emacs 25+; I'd rather enable it manually
-(global-eldoc-mode -1)
+(global-eldoc-mode -1) ; auto-enabled in Emacs 25+; I'll do it myself
+(blink-cursor-mode +1) ; a good indicator that Emacs isn't frozen
 
 ;; draw me like one of your French editors
 (tooltip-mode -1) ; relegate tooltips to echo area only
 (menu-bar-mode -1)
 (when (fboundp 'tool-bar-mode)
   (tool-bar-mode -1))
-(when (display-graphic-p)
-  (scroll-bar-mode -1)
-  ;; buffer name in frame title
-  (setq-default frame-title-format '("DOOM Emacs"))
-  ;; standardize fringe width
-  (push (cons 'left-fringe  doom-ui-fringe-size) default-frame-alist)
-  (push (cons 'right-fringe doom-ui-fringe-size) default-frame-alist)
-  ;; no fringe in the minibuffer
-  (add-hook! '(emacs-startup-hook minibuffer-setup-hook)
-    (set-window-fringes (minibuffer-window) 0 0 nil)))
+(when (fboundp 'scroll-bar-mode)
+  (scroll-bar-mode -1))
+
+;; buffer name in frame title
+(setq-default frame-title-format '("DOOM Emacs"))
+;; standardize fringe width
+(push (cons 'left-fringe  doom-ui-fringe-size) default-frame-alist)
+(push (cons 'right-fringe doom-ui-fringe-size) default-frame-alist)
+;; no fringe in the minibuffer
+(defun doom|no-fringes-in-minibuffer ()
+  (set-window-fringes (minibuffer-window) 0 0 nil))
+(add-hook! '(doom-init-hook minibuffer-setup-hook)
+  #'doom|no-fringes-in-minibuffer)
 
 
 ;;
@@ -320,9 +326,8 @@ file."
 
 ;; indicators for empty lines past EOF
 (def-package! vi-tilde-fringe
-  :when (display-graphic-p)
   :commands global-vi-tilde-fringe-mode
-  :init (add-hook 'window-setup-hook #'global-vi-tilde-fringe-mode))
+  :init (add-hook 'doom-init-hook #'global-vi-tilde-fringe-mode))
 
 ;; For a distractions-free-like UI, that dynamically resizes margets and can
 ;; center a buffer.

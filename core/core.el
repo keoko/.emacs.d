@@ -42,15 +42,17 @@ line or use --debug-init to enable this.")
 that are safe to share across systems (if this config is symlinked across
 several computers).")
 
-(defvar doom-etc-dir
-  (concat doom-local-dir "@" (system-name) "/etc/")
+(defvar doom-host-dir (concat doom-local-dir "@" (system-name))
+  "Directory for hostname-specific file storage. Used by `doom-etc-dir' and
+`doom-cache-dir'.")
+
+(defvar doom-etc-dir (concat doom-host-dir "/etc/")
   "Host-namespaced directory for non-volatile storage. These are not deleted or
 tampored with by DOOM functions. Use this for dependencies like servers or
 config files that are stable (i.e. it should be unlikely that you need to delete
 them if something goes wrong).")
 
-(defvar doom-cache-dir
-  (concat doom-local-dir "@" (system-name) "/cache/")
+(defvar doom-cache-dir (concat doom-host-dir "/cache/")
   "Host-namespaced directory for volatile storage. Deleted when
 `doom/clean-cache' is called. Use this for transient files that are generated on
 the fly like caches and temporary files. Anything that may need to be cleared if
@@ -122,8 +124,15 @@ melodramatic ex-vimmer disappointed with the text-editor status quo."
       initial-major-mode 'fundamental-mode
       initial-scratch-message nil)
 
+;; Custom init hooks; clearer than `after-init-hook', `emacs-startup-hook', and
+;; `window-setup-hook'.
+(defvar doom-init-hook nil
+  "A list of hooks run when DOOM is initialized, before `doom-post-init-hook'.")
 
-;;;
+(defvar doom-post-init-hook nil
+  "A list of hooks run after DOOM initialization is complete, and after
+`doom-init-hook'.")
+
 ;; Automatic minor modes
 (defvar doom-auto-minor-mode-alist '()
   "Alist mapping filename patterns to corresponding minor mode functions, like
@@ -151,7 +160,7 @@ enable multiple minor modes for the same regexp.")
 
 
 ;;;
-;; Bootstrap
+;; Initialize
 (eval-and-compile
   (defvar doom--file-name-handler-alist file-name-handler-alist)
   (setq gc-cons-threshold 402653184
@@ -159,7 +168,8 @@ enable multiple minor modes for the same regexp.")
         file-name-handler-alist nil)
 
   (require 'cl-lib)
-  (require 'core-packages (concat doom-core-dir "core-packages")))
+  (require 'core-packages (concat doom-core-dir "core-packages"))
+  (load! core-lib))
 
 (eval-when-compile
   (doom-initialize))
@@ -167,8 +177,25 @@ enable multiple minor modes for the same regexp.")
 (setq load-path (eval-when-compile load-path)
       doom--package-load-path (eval-when-compile doom--package-load-path))
 
-;;; Let 'er rip
-(load! core-lib)
+(defun doom|finalize ()
+  (unless doom-init-p
+    (run-hooks 'doom-init-hook)
+    (run-hooks 'doom-post-init-hook)
+
+    ;; Don't keep gc-cons-threshold too high. It helps to stave off the GC while
+    ;; Emacs starts up, but afterwards it causes stuttering and random freezes.
+    ;; So reset it to a reasonable default.
+    (setq gc-cons-threshold 16777216
+          gc-cons-percentage 0.1
+          file-name-handler-alist doom--file-name-handler-alist
+          doom-init-p t)))
+
+(add-hook! '(emacs-startup-hook doom-reload-hook)
+  #'doom|finalize)
+
+
+;;;
+;; Bootstrap
 (load! core-os) ; consistent behavior across Oses
 (with-demoted-errors "AUTOLOAD ERROR: %s"
   (require 'autoloads doom-autoload-file t))
@@ -179,17 +206,6 @@ enable multiple minor modes for the same regexp.")
   (load! core-editor)     ; baseline configuration for text editing
   (load! core-projects)   ; making Emacs project-aware
   (load! core-keybinds))  ; centralized keybind system + which-key
-
-(defun doom|init ()
-  ;; Don't keep gc-cons-threshold too high. It helps to stave off the GC while
-  ;; Emacs starts up, but afterwards it causes stuttering and random freezes. So
-  ;; reset it to a reasonable default.
-  (setq gc-cons-threshold 16777216
-        gc-cons-percentage 0.1
-        file-name-handler-alist doom--file-name-handler-alist))
-
-(add-hook! '(emacs-startup-hook doom-reload-hook)
-  #'doom|init)
 
 (provide 'core)
 ;;; core.el ends here
